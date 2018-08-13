@@ -1,19 +1,27 @@
 package de.h90.chromedino;
 
-import javax.swing.JFrame;
-import javax.swing.Timer;
-import java.awt.Canvas;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
 
 public class Game {
 
+    private static final int X_OFFSET = 30;
+
     private static Dinosaur DINO = new Dinosaur();
 
+    private static String[] lines = new String[]{
+            "                __",
+            "               /*_)",
+            "     .---..._./..",
+            "    /...........",
+            " __/(...|.(...|",
+            "/__.-|_|---|_|"};
+
     public static void main(String[] args) {
-        final String title = "Test Window";
+        final String title = "Press Shift to jump";
         final int width = 1200;
         final int height = width / 16 * 9;
 
@@ -39,19 +47,36 @@ public class Game {
 
         canvas.createBufferStrategy(3);
 
-        int[] y = new int[]{600};
+        frame.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == 16) {
+                    DINO.jump();
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+            }
+        });
+
         Font font = new Font(Font.MONOSPACED, canvas.getFont().getStyle(), canvas.getFont().getSize());
 
         new Timer(25, e -> {
+
             BufferStrategy bufferStrategy = canvas.getBufferStrategy();
             Graphics graphics = bufferStrategy.getDrawGraphics();
             graphics.clearRect(0, 0, width, height);
             graphics.setColor(Color.GREEN);
-            int base = y[0]--;
-            for (int i = 0; i < DINO.lines.length; i++) {
-                String line = DINO.lines[i];
+            int base = DINO.nextHeight();
+            for (int i = 0; i < lines.length; i++) {
+                String line = lines[i];
                 graphics.setFont(font);
-                graphics.drawString(line, 5, base + i * 10);
+                graphics.drawString(line, X_OFFSET, base + i * 10);
             }
             bufferStrategy.show();
             graphics.dispose();
