@@ -6,6 +6,7 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
@@ -78,6 +79,7 @@ public class Game {
             graphics.setColor(Color.GREEN);
             dino.draw(graphics);
             cactus.draw(graphics);
+            Toolkit.getDefaultToolkit().sync();
             bufferStrategy.show();
             graphics.dispose();
         }).start();
