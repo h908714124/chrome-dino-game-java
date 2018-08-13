@@ -1,34 +1,30 @@
 package de.h90.chromedino;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.Timer;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
+import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class Game {
 
-    private static final int X_OFFSET = 30;
+    final static int WIDTH = 1200;
 
-    private static Dinosaur DINO = new Dinosaur();
-
-    private static String[] lines = new String[]{
-            "                __",
-            "               /*_)",
-            "     .---..._./..",
-            "    /...........",
-            " __/(...|.(...|",
-            "/__.-|_|---|_|"};
+    final static int HEIGHT = WIDTH / 16 * 9;
 
     public static void main(String[] args) {
         final String title = "Press Shift to jump";
-        final int width = 1200;
-        final int height = width / 16 * 9;
 
         //Creating the frame.
         JFrame frame = new JFrame(title);
 
-        frame.setSize(width, height);
+        frame.setSize(WIDTH, HEIGHT);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLocationRelativeTo(null);
         frame.setResizable(false);
@@ -37,7 +33,7 @@ public class Game {
         //Creating the canvas.
         Canvas canvas = new Canvas();
 
-        canvas.setSize(width, height);
+        canvas.setSize(WIDTH, HEIGHT);
         canvas.setBackground(Color.BLACK);
         canvas.setVisible(true);
         canvas.setFocusable(false);
@@ -47,6 +43,10 @@ public class Game {
 
         canvas.createBufferStrategy(3);
 
+        Font font = new Font(Font.MONOSPACED, canvas.getFont().getStyle(), canvas.getFont().getSize());
+        Dinosaur dino = new Dinosaur(font);
+        Cactus cactus = new Cactus(font);
+
         frame.addKeyListener(new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
@@ -55,7 +55,7 @@ public class Game {
             @Override
             public void keyPressed(KeyEvent e) {
                 if (e.getKeyCode() == 16) {
-                    DINO.jump();
+                    dino.jump();
                 }
             }
 
@@ -64,20 +64,20 @@ public class Game {
             }
         });
 
-        Font font = new Font(Font.MONOSPACED, canvas.getFont().getStyle(), canvas.getFont().getSize());
+        Random random = ThreadLocalRandom.current();
 
         new Timer(25, e -> {
 
+            if (random.nextInt(30) == 0) {
+                cactus.start();
+            }
+
             BufferStrategy bufferStrategy = canvas.getBufferStrategy();
             Graphics graphics = bufferStrategy.getDrawGraphics();
-            graphics.clearRect(0, 0, width, height);
+            graphics.clearRect(0, 0, WIDTH, HEIGHT);
             graphics.setColor(Color.GREEN);
-            int base = DINO.nextHeight();
-            for (int i = 0; i < lines.length; i++) {
-                String line = lines[i];
-                graphics.setFont(font);
-                graphics.drawString(line, X_OFFSET, base + i * 10);
-            }
+            dino.draw(graphics);
+            cactus.draw(graphics);
             bufferStrategy.show();
             graphics.dispose();
         }).start();
