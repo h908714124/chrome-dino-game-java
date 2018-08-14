@@ -13,75 +13,118 @@ import java.awt.image.BufferStrategy;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class Game {
+public class Game extends JFrame {
 
-    final static int WIDTH = 1200;
+    static final int WIDTH = 1200;
 
-    final static int HEIGHT = WIDTH / 16 * 9;
+    private static final Random RANDOM = ThreadLocalRandom.current();
 
-    public static void main(String[] args) {
-        final String title = "Press Shift to jump";
+    private static final Canvas CANVAS = new Canvas();
+
+    private static final int HEIGHT = WIDTH / 16 * 9;
+    private static final int KEYCODE_SHIFT = 16;
+    private static final int KEYCODE_ESCAPE = 27;
+    private static final int MAX_CACTI = 2;
+    private static final int MIN_CACTUS_DISTANCE = 260;
+    private static final int KEYCODE_SPACE = 32;
+    private static final int KEYCODE_P = 80;
+
+    private void run() {
+        String title = "Press Shift to jump";
 
         //Creating the frame.
-        JFrame frame = new JFrame(title);
+        setTitle(title);
 
-        frame.setSize(WIDTH, HEIGHT);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setResizable(false);
-        frame.setVisible(true);
+        setSize(WIDTH, HEIGHT);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+        setResizable(false);
+        setVisible(true);
 
         //Creating the canvas.
-        Canvas canvas = new Canvas();
 
-        canvas.setSize(WIDTH, HEIGHT);
-        canvas.setBackground(Color.BLACK);
-        canvas.setVisible(true);
-        canvas.setFocusable(false);
+        CANVAS.setSize(WIDTH, HEIGHT);
+        CANVAS.setBackground(Color.BLACK);
+        CANVAS.setVisible(true);
+        CANVAS.setFocusable(false);
 
         //Putting it all together.
-        frame.add(canvas);
+        add(CANVAS);
 
-        canvas.createBufferStrategy(3);
+        CANVAS.createBufferStrategy(3);
 
-        Font font = new Font(Font.MONOSPACED, canvas.getFont().getStyle(), canvas.getFont().getSize());
+        Font font = new Font(Font.MONOSPACED, CANVAS.getFont().getStyle(), CANVAS.getFont().getSize());
         Dinosaur dino = new Dinosaur(font);
-        Cactus cactus = new Cactus(font);
 
-        frame.addKeyListener(new KeyListener() {
+        Cactus[] cacti = new Cactus[MAX_CACTI];
+        cacti[0] = new Cactus(font);
+        cacti[1] = new Cactus(font);
+
+        Timer timer = new Timer(25, __ -> {
+
+            startCacti(cacti);
+            BufferStrategy bufferStrategy = CANVAS.getBufferStrategy();
+            Graphics graphics = bufferStrategy.getDrawGraphics();
+            graphics.clearRect(0, 0, WIDTH, HEIGHT);
+            graphics.setColor(Color.GREEN);
+            drawEverything(dino, cacti, graphics);
+            bufferStrategy.show();
+            graphics.dispose();
+            Toolkit.getDefaultToolkit().sync();
+        });
+
+        addKeyListener(createKeyListener(dino, timer));
+
+        timer.start();
+    }
+
+    public static void main(String[] args) {
+        new Game().run();
+    }
+
+    private static KeyListener createKeyListener(Dinosaur dino, Timer timer) {
+        return new KeyListener() {
             @Override
             public void keyTyped(KeyEvent e) {
             }
 
             @Override
             public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == 16) {
+                int code = e.getKeyCode();
+                if (code == KEYCODE_SHIFT || code == KEYCODE_SPACE) {
                     dino.jump();
+                } else if (code == KEYCODE_ESCAPE) {
+                    System.exit(0);
+                } else if (code == KEYCODE_P) {
+                    if (timer.isRunning()) {
+                        timer.stop();
+                    } else {
+                        timer.start();
+                    }
                 }
             }
 
             @Override
             public void keyReleased(KeyEvent e) {
             }
-        });
+        };
+    }
 
-        Random random = ThreadLocalRandom.current();
-
-        new Timer(25, e -> {
-
-            if (random.nextInt(30) == 0) {
-                cactus.start();
-            }
-
-            BufferStrategy bufferStrategy = canvas.getBufferStrategy();
-            Graphics graphics = bufferStrategy.getDrawGraphics();
-            graphics.clearRect(0, 0, WIDTH, HEIGHT);
-            graphics.setColor(Color.GREEN);
-            dino.draw(graphics);
+    private static void drawEverything(Dinosaur dino, Cactus[] cacti, Graphics graphics) {
+        dino.draw(graphics);
+        for (Cactus cactus : cacti) {
             cactus.draw(graphics);
-            Toolkit.getDefaultToolkit().sync();
-            bufferStrategy.show();
-            graphics.dispose();
-        }).start();
+        }
+    }
+
+    private static void startCacti(Cactus[] cacti) {
+        for (int i = 0; i < cacti.length; i++) {
+            Cactus cactus = cacti[i];
+            if (cactus.distance(cacti[(i + 1) % MAX_CACTI]) > MIN_CACTUS_DISTANCE) {
+                if (RANDOM.nextInt(80) == 0) {
+                    cactus.start();
+                }
+            }
+        }
     }
 }

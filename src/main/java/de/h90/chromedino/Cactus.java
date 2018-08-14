@@ -60,4 +60,11 @@ class Cactus {
         }
         return x;
     }
+
+    int distance(Cactus other) {
+        if (this.velocity == 0 && other.velocity == 0) {
+            return 1000;
+        }
+        return Math.abs(this.x - other.x);
+    }
 }
